@@ -6,26 +6,63 @@ import ScriptViewer from './components/ScriptViewer';
 import IncidentRecorder from './components/IncidentRecorder';
 import ShareableCard from './components/ShareableCard';
 import SubscriptionBanner from './components/SubscriptionBanner';
+import AuthModal from './components/AuthModal';
+import UpgradeModal from './components/UpgradeModal';
+import NotificationSystem from './components/NotificationSystem';
+import { useStore } from './store/useStore';
+import { authHelpers } from './lib/supabase';
 
 function App() {
-  const [selectedState, setSelectedState] = useState('');
-  const [activeTab, setActiveTab] = useState('rights');
+  const { 
+    selectedState, 
+    setSelectedState, 
+    activeTab, 
+    setActiveTab, 
+    initializeAuth,
+    loadLegalGuides,
+    loadScripts
+  } = useStore();
 
-  // Try to get user's location on load
+  // Initialize authentication and load data on app start
   useEffect(() => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          // In a real app, you'd use a reverse geocoding API
-          // For demo purposes, we'll just set a default state
-          console.log('Location obtained:', position.coords);
-        },
-        (error) => {
-          console.log('Location access denied or failed:', error);
-        }
-      );
-    }
-  }, []);
+    const initialize = async () => {
+      // Initialize authentication
+      await initializeAuth();
+      
+      // Load initial data
+      await loadLegalGuides();
+      await loadScripts();
+      
+      // Try to get user's location
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            // In a real app, you'd use a reverse geocoding API
+            // For demo purposes, we'll just set a default state
+            console.log('Location obtained:', position.coords);
+          },
+          (error) => {
+            console.log('Location access denied or failed:', error);
+          }
+        );
+      }
+    };
+
+    initialize();
+
+    // Set up auth state change listener
+    const { data: { subscription } } = authHelpers.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN') {
+        console.log('User signed in:', session.user);
+      } else if (event === 'SIGNED_OUT') {
+        console.log('User signed out');
+      }
+    });
+
+    return () => {
+      subscription?.unsubscribe();
+    };
+  }, [initializeAuth, loadLegalGuides, loadScripts]);
 
   const tabs = [
     { id: 'rights', label: 'Your Rights', icon: '🛡️' },
@@ -97,6 +134,11 @@ function App() {
           </div>
         </footer>
       </main>
+
+      {/* Modals and Overlays */}
+      <AuthModal />
+      <UpgradeModal />
+      <NotificationSystem />
     </div>
   );
 }

@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
-import { Share2, Download, Copy, Check } from 'lucide-react';
-import { LEGAL_GUIDES } from '../data/mockData';
+import { Share2, Download, Copy, Sparkles, MapPin, Calendar, Crown, AlertCircle } from 'lucide-react';
+import { useStore } from '../store/useStore';
+import { useSubscriptionStore } from '../store/useStore';
+import { useUIStore } from '../store/useStore';
+import { aiService, aiUtils } from '../lib/ai';
 
 const ShareableCard = ({ state }) => {
   const [isGenerating, setIsGenerating] = useState(false);
